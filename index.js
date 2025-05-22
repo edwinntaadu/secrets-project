@@ -14,6 +14,8 @@ const saltRounds = 10;
 dotenv.config();
 
 
+console.log('DATABASE_URL:', process.env.DATABASE_URL); // Debugging line
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -27,10 +29,27 @@ app.use(express.static("public"));
 app.use(passport.initialize());
 app.use(passport.session());
 
-const db = new pg.Client({
-  connectionStrings: process.env.DATABASE_URL,
+const { Pool } = pg;
+
+console.log('DATABASE_URL:', process.env.DATABASE_URL); // Debugging line
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
 });
-db.connect();
+
+pool.connect((err, client, release) => {
+  if (err) {
+    console.error("Error connecting to the database:", err.stack);
+    return;
+  } 
+    console.log("Connected to the database");
+    release();
+});
+
+// db.connect();
 
 app.get("/", (req, res) => {
   res.render("home.ejs");
